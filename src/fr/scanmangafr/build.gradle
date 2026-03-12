@@ -1,8 +1,8 @@
 ext {
-    extName = 'Mangas-Origines.fr'
-    extClass = '.MangasOriginesFr'
+    extName = 'Scan-manga.com'
+    extClass = '.ScanManga'
     themePkg = 'madara'
-    baseUrl = 'https://mangas-origines.fr'
+    baseUrl = 'https://www.scan-manga.com/?po'
     overrideVersionCode = 3
     isNsfw = false
 }

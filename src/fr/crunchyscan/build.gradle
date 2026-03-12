@@ -1,8 +1,8 @@
 ext {
-    extName = 'Mangas-Origines.fr'
-    extClass = '.MangasOriginesFr'
+    extName = 'CrunchyScan.fr'
+    extClass = '.CrunchyScan'
     themePkg = 'madara'
-    baseUrl = 'https://mangas-origines.fr'
+    baseUrl = 'https://crunchyscan.fr/'
     overrideVersionCode = 3
     isNsfw = false
 }
