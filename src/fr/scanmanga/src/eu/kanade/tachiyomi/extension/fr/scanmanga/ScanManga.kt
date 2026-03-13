@@ -23,7 +23,7 @@ import java.util.zip.Inflater
 class ScanManga : HttpSource() {
     override val name = "Scan-Manga"
 
-    override val baseUrl = "https://m.scan-manga.com"
+    override val baseUrl = "https://www.scan-manga.com"
     private val baseImageUrl = "https://static.scan-manga.com/img/manga"
 
     override val lang = "fr"
@@ -53,7 +53,7 @@ class ScanManga : HttpSource() {
     }
 
     // Latest
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl, headers)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/?po", headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
