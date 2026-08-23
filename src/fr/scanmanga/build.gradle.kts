@@ -1,17 +1,14 @@
-import io.github.keiyoushi.gradle.api.ContentWarning
-
 plugins {
-    alias(kei.plugins.extension)
+    id("com.android.application")
+    id("kotlin-android")
 }
 
-keiyoushi {
-    name = "Scan-Manga"
-    versionCode = 23
-    contentWarning = ContentWarning.NSFW // or MIXED, please confirm
+ext {
+    extName = "Scan-Manga"
+    pkgNameSuffix = "fr.scanmanga"
+    extClass = ".ScanManga"
+    extVersionCode = 1
     libVersion = "1.4"
-
-    source {
-        baseUrl = "https://m.scan-manga.com"
-        lang = "fr"
-    }
 }
+
+apply(from = "$rootDir/common.gradle")
