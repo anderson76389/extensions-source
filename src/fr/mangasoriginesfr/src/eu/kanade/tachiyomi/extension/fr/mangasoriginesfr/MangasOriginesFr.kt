@@ -1,82 +1,112 @@
-package eu.kanade.tachiyomi.extension.fr.mangasoriginesfr
+package eu.kanade.tachiyomi.extension.fr.mangasorigines
 
-import eu.kanade.tachiyomi.multisrc.origines.Origines
-import keiyoushi.annotation.Source
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.Headers
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-@Source
-abstract class MangasOriginesFr : Origines() {
+class MangaOrigines : ParsedHttpSource() {
 
-    override val mangaPath = "oeuvre"
+    override val name = "Manga Origines"
+    override val baseUrl = "https://mangas-origines.fr"
+    override val lang = "fr"
+    override val supportsLatest = true
 
-    override val legacyMangaPaths = setOf("catalogues")
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+                .header("Referer", "$baseUrl/")
+                .build()
+            chain.proceed(request)
+        }
+        .build()
 
-    override val origins = listOf(
-        "Manhwa" to "manhwa",
-        "Manhua" to "manhua",
-        "Manga" to "manga",
-    )
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+        .add("Referer", "$baseUrl/")
 
-    override val genres = listOf(
-        "Action" to "action",
-        "Adventure" to "adventure",
-        "Amitié" to "amitie",
-        "Amour" to "amour",
-        "Art Martiaux" to "art-martiaux",
-        "Aventure" to "aventure",
-        "BL" to "bl",
-        "Boys" to "boys",
-        "Combat" to "combat",
-        "Comedy" to "comedy",
-        "Comédie" to "comedie",
-        "Dark Fantasy" to "dark-fantasy",
-        "Drama" to "drama",
-        "Drame" to "drame",
-        "Dystopie" to "dystopie",
-        "Démon" to "demon",
-        "Ecchi" to "ecchi",
-        "Erotique" to "erotique",
-        "Fantastique" to "fantastique",
-        "Fantasy" to "fantasy",
-        "Guerre" to "guerre",
-        "Harem" to "harem",
-        "Historique" to "historique",
-        "Horreur" to "horreur",
-        "Isekai" to "isekai",
-        "Jeu" to "jeu",
-        "Josei" to "josei",
-        "Magie" to "magie",
-        "Malédiction" to "malediction",
-        "Mature" to "mature",
-        "Moderne" to "moderne",
-        "Mort" to "mort",
-        "Murim" to "murim",
-        "Musique" to "musique",
-        "Mystère" to "mystere",
-        "Novel" to "novel",
-        "Post-Apo" to "post-apo",
-        "Prison" to "prison",
-        "Psychologique" to "psychologique",
-        "Religion" to "religion",
-        "Returner" to "returner",
-        "Romance" to "romance",
-        "Réincarnation" to "reincarnation",
-        "Régression" to "regression",
-        "School life" to "school-life",
-        "Sci-fi" to "sci-fi",
-        "Seinen" to "seinen",
-        "Shojo" to "shojo",
-        "Shonen" to "shonen",
-        "Slice of Life" to "slice-of-life",
-        "Société" to "societe",
-        "Sorcellerie" to "sorcellerie",
-        "Sport" to "sport",
-        "Steampunk" to "steampunk",
-        "Supernaturel" to "supernaturel",
-        "Surnaturel" to "surnaturel",
-        "Tragédie" to "tragedie",
-        "Vengeance" to "vengeance",
-        "Webcomic" to "webcomic",
-        "Yuri" to "yuri",
-        "École" to "ecole",
-    )
+    // --- POPULAIRES ---
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/catalogue?page=$page", headers)
+    override fun popularMangaSelector(): String = "div.grid div.group, div.manga-card, div.page-item-detail"
+    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
+        val titleEl = element.select("h3 a, a.manga-title, div.post-title a").first()!!
+        title = titleEl.text().trim()
+        setUrlWithoutDomain(titleEl.attr("href"))
+        thumbnail_url = element.select("img").attr("abs:data-src").ifEmpty {
+            element.select("img").attr("abs:src")
+        }
+    }
+    override fun popularMangaNextPageSelector(): String? = "a[rel=next], .pagination .next, a:contains(Suivant)"
+
+    // --- DERNIÈRES SORTIES ---
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/dernieres-sorties?page=$page", headers)
+    override fun latestUpdatesSelector(): String = popularMangaSelector()
+    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun latestUpdatesNextPageSelector(): String? = popularMangaNextPageSelector()
+
+    // --- RECHERCHE ---
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
+        GET("$baseUrl/recherche?q=${java.net.URLEncoder.encode(query, "UTF-8")}&page=$page", headers)
+    override fun searchMangaSelector(): String = popularMangaSelector()
+    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaNextPageSelector(): String? = null
+
+    // --- DÉTAILS ---
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        description = document.select("div.synopsis, div.description, div.summary__content").text().trim()
+        genre = document.select("div.genres a, div.genres-content a").joinToString { it.text().trim() }
+        status = when (document.select("div.post-status, div.status").text().lowercase()) {
+            "en cours", "ongoing" -> SManga.ONGOING
+            "terminé", "completed" -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
+        thumbnail_url = document.select("div.summary_image img, div.manga-poster img").attr("abs:data-src").ifEmpty {
+            document.select("div.summary_image img, div.manga-poster img").attr("abs:src")
+        }
+    }
+
+    // --- CHAPITRES ---
+    override fun chapterListSelector(): String = "li.wp-manga-chapter, div.chapter-item, ul.chapters-list li"
+    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
+        val link = element.select("a").first()!!
+        setUrlWithoutDomain(link.attr("href"))
+        name = link.text().trim()
+        date_upload = parseDate(element.select("span.chapter-release-date, span.date").text().trim())
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching {
+            SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).parse(dateStr)?.time
+                ?: SimpleDateFormat("d MMMM yyyy", Locale.FRENCH).parse(dateStr)?.time
+                ?: 0L
+        }.getOrDefault(0L)
+    }
+
+    // --- EXTRACTION DES PAGES ---
+    override fun pageListParse(document: Document): List<Page> {
+        val pages = mutableListOf<Page>()
+        document.select("div.page-break img, div.reading-content img, div#chapter-images img").forEachIndexed { index, element ->
+            val url = element.attr("data-src").ifEmpty {
+                element.attr("data-lazy-src").ifEmpty {
+                    element.attr("src")
+                }
+            }.trim()
+            if (url.isNotBlank()) {
+                pages.add(Page(index, "", url))
+            }
+        }
+        return pages
+    }
+
+    override fun imageUrlParse(document: Document): String = ""
 }
