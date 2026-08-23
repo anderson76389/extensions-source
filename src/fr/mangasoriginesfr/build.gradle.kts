@@ -1,18 +1,13 @@
-import io.github.keiyoushi.gradle.api.ContentWarning
-
 plugins {
-    alias(kei.plugins.extension)
+    id("com.android.application")
 }
 
-keiyoushi {
-    name = "Mangas-Origines.fr"
-    versionCode = 57
-    contentWarning = ContentWarning.SAFE
-    libVersion = "1.6"
-    theme = "origines"
-
-    source {
-        lang = "fr"
-        baseUrl = "https://mangas-origines.fr"
-    }
+ext {
+    extName = "Manga Origines"
+    pkgNameSuffix = "fr.mangasorigines"
+    extClass = ".MangaOrigines"
+    extVersionCode = 1
+    libVersion = "1.4"
 }
+
+apply(from = "$rootDir/common.gradle")
