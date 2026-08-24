@@ -30,14 +30,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Prepare signing key
+      - name: Generate signing key on the fly
         run: |
-          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > signingkey.jks
+          keytool -genkey -v -keystore signingkey.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android,OU=Android,O=Android,L=Android,ST=Android,C=US"
 
       - name: Compile APK
         env:
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: androiddebugkey
+          KEY_PASSWORD: android
         run: |
           ./gradlew :src:fr:scanmanga:assembleRelease
 
