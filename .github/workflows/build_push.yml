@@ -30,30 +30,27 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Generate signing key on the fly
+      - name: Generate local keystore
         run: |
-          keytool -genkey -v -keystore signingkey.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android,OU=Android,O=Android,L=Android,ST=Android,C=US"
+          keytool -genkeypair -v \
+            -keystore signingkey.jks \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android,OU=Android,O=Android,L=Android,ST=Android,C=US"
 
       - name: Compile APK
         env:
           KEY_ALIAS: androiddebugkey
           KEY_PASSWORD: android
         run: |
-          ./gradlew :src:fr:scanmanga:assembleRelease
+          ./gradlew :src:fr:scanmanga:assembleRelease --stacktrace
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Archive compiled APK
+        uses: actions/upload-artifact@v4
         with:
-          python-version: '3.11'
-
-      - name: Generate Repository and Index
-        run: |
-          python3 -m pip install -r scripts/requirements.txt || true
-          python3 scripts/build_repo.py || true
-
-      - name: Deploy to repo branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: repo
-          publish_dir: repo
+          name: ScanManga-APK
+          path: "**/*.apk"
