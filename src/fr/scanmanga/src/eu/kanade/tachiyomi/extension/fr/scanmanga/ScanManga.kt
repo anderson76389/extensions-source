@@ -511,7 +511,8 @@ abstract class ScanManga :
         private val SML_PARAM_REGEX = Regex("""sml\s*=\s*'([^']+)'""")
         private val SME_PARAM_REGEX = Regex("""sme\s*=\s*'([^']+)'""")
         private val CHAPTER_INFO_REGEX = Regex("""const idc = (\d+)""")
-        private const val PAGE_LIST_URL = "https://bqj.{topDomain}/lel/{chapterId}.json"
+        ```kotlin
+        private const val PAGE_LIST_URL = "https://bqj.{topDomain}/{chapterId}.json"
         private const val REQUEST_BODY = """{"a":"{sme}","b":"{sml}","c":"{fingerprint}"}"""
         private const val LEL_TOKEN = "yf"
         private const val CF_POLL_INTERVAL_MS = 5000L
