@@ -188,7 +188,7 @@ abstract class ScanManga :
             val extraTitle = titleEl?.text()
 
             SChapter.create().apply {
-                name = if (!extraTitle.isNullOrEmpty()) "$chapterName - $extraTitle" else chapterName
+                name = if (!extraTitle.isNullOrEmpty()) "$chapterName -$extraTitle" else chapterName
                 setUrlWithoutDomain(linkEl.absUrl("href"))
             }
         }
@@ -214,7 +214,7 @@ abstract class ScanManga :
 
                 // Convert from base `option` to decimal
                 val number = digitString.toIntOrNull(option)
-                    ?: error("Failed to parse token: $digitString as base $option")
+                    ?: error("Failed to parse token: $digitString as base$option")
 
                 // Reverse the shift done during encodeIt()
                 val originalCharCode = number - interval
@@ -373,8 +373,9 @@ abstract class ScanManga :
         val (sme) = SME_PARAM_REGEX.find(unpackedScript)?.destructured
             ?: error("Failed to extract sme parameter.")
 
-        val (chapterId) = CHAPTER_INFO_REGEX.find(packedScript)?.destructured
-            ?: error("Failed to extract chapter ID.")
+        val documentUrl = document.baseUri().toHttpUrl()
+        val chapterId = CHAPTER_INFO_REGEX.find(packedScript)?.groupValues?.get(1)
+            ?: documentUrl.encodedPath.substringAfterLast("_").substringBefore(".html")
 
         val availableVariables = mapOf(
             "sme" to sme,
@@ -385,14 +386,14 @@ abstract class ScanManga :
         )
 
         val mediaType = "application/json; charset=UTF-8".toMediaType()
-        val documentUrl = document.baseUri().toHttpUrl()
 
         val requestBody = injectVariables(REQUEST_BODY, availableVariables)
         val pageListUrl = injectVariables(PAGE_LIST_URL, availableVariables)
         val requestHeaders = headers.newBuilder()
-            .add("Origin", "${documentUrl.scheme}://${documentUrl.host}")
-            .add("Referer", documentUrl.toString())
-            .add("Token", LEL_TOKEN)
+            .set("Origin", "https://www.scan-manga.com")
+            .set("Referer", "https://www.scan-manga.com/")
+            .set("source", documentUrl.toString())
+            .set("Token", LEL_TOKEN)
             .build()
 
         val pageListRequest = POST(
@@ -438,18 +439,18 @@ abstract class ScanManga :
                 webView.webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         val script = """
-                        (function() {
-                            try {
-                                const canvas = document.createElement("canvas");
-                                const gl = canvas.getContext("webgl");
-                                const debugInfo = gl ? gl.getExtension("WEBGL_debug_renderer_info") : null;
-                                const gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "IC";
+                            (function() {
+                                try {
+                                    const canvas = document.createElement("canvas");
+                                    const gl = canvas.getContext("webgl");
+                                    const debugInfo = gl ? gl.getExtension("WEBGL_debug_renderer_info") : null;
+                                    const gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "IC";
 
-                                return btoa(gpu);
-                            } catch (e) {
-                                return btoa("IC");
-                            }
-                        })();
+                                    return btoa(gpu);
+                                } catch (e) {
+                                    return btoa("IC");
+                                }
+                            })();
                         """.trimIndent()
 
                         view?.evaluateJavascript(script) {
@@ -464,8 +465,11 @@ abstract class ScanManga :
             }
 
             try {
-                latch.await(5, TimeUnit.SECONDS)
+                if (!latch.await(5, TimeUnit.SECONDS)) {
+                    sessionWarmedUp.set(false)
+                }
             } catch (_: InterruptedException) {
+                sessionWarmedUp.set(false)
             }
 
             val decodedValue = String(Base64.decode(returnValue, Base64.DEFAULT))
@@ -511,8 +515,7 @@ abstract class ScanManga :
         private val SML_PARAM_REGEX = Regex("""sml\s*=\s*'([^']+)'""")
         private val SME_PARAM_REGEX = Regex("""sme\s*=\s*'([^']+)'""")
         private val CHAPTER_INFO_REGEX = Regex("""const idc = (\d+)""")
-        ```kotlin
-        private const val PAGE_LIST_URL = "https://bqj.{topDomain}/{chapterId}.json"
+        private const val PAGE_LIST_URL = "https://bqj.{topDomain}/lel/{chapterId}.json"
         private const val REQUEST_BODY = """{"a":"{sme}","b":"{sml}","c":"{fingerprint}"}"""
         private const val LEL_TOKEN = "yf"
         private const val CF_POLL_INTERVAL_MS = 5000L
