@@ -42,7 +42,7 @@ jobs:
       - name: Get list of changed files and generate matrices
         id: generate-matrices
         run: |
-          python .github/scripts/generate-build-matrices.py
+          python .github/scripts/generate-build-matrices.py "${{ github.event.before || 'HEAD~1' }}"
 
   build:
     name: Build extensions
