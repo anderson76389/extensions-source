@@ -72,9 +72,7 @@ jobs:
         with:
           cache-read-only: ${{ matrix.chunk.number > 1 }}
 
-      - name: Set up signing key
-        run: |
-          if [ -z "${{ secrets.SIGNING_KEY }}" ]; then
+         if [ -z "${{ secrets.SIGNING_KEY }}" ]; then
             keytool -genkey -v -keystore signingkey.jks -alias androidkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=ScanManga,O=Mihon,C=FR"
             echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
             echo "ALIAS=androidkey" >> $GITHUB_ENV
