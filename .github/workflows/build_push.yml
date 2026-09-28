@@ -142,6 +142,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd repo
+          if [ ! -f index.json ]; then
+            echo "[]" > index.json
+          fi
           pip install protobuf
           python -u ../main/.github/scripts/publish-repo.py "$DELETE" "$GITHUB_SHA"
           git config --global user.email "action@github.com"
