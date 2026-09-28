@@ -1,0 +1,12 @@
+{
+  "eu.kanade.tachiyomi.extension.fr.scanmanga": {
+    "apk": {
+      "name": "tachiyomi-fr.scanmanga-v1.4.23.apk",
+      "sha256": "fc012118e3bd8b735bf0cc87fc873aeec35d9ad6ae6a5ac3d1369686c11f7bab"
+    },
+    "jar": {
+      "name": "tachiyomi-fr.scanmanga-v1.4.23.jar",
+      "sha256": "5c5de7af6f78c37e97f58c2e8780b416f575156d54a4f6b95f3f3d76f670e846"
+    }
+  }
+}
