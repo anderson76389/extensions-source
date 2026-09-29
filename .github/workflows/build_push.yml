@@ -24,7 +24,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build ScanManga APK
-        run: ./gradlew :src:fr:scanmanga:assembleDebug -x spotlessCheck
+        run: ./gradlew :src:fr:scanmanga:assembleRelease -x spotlessCheck
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
@@ -32,6 +32,6 @@ jobs:
         with:
           tag_name: scanmanga-latest
           name: Scan-Manga Update
-          files: src/fr/scanmanga/build/outputs/apk/debug/*.apk
+          files: src/fr/scanmanga/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
