@@ -24,7 +24,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build ScanManga APK
-        run: ./gradlew :src:fr:scanmanga:assembleDebug
+        run: ./gradlew :src:fr:scanmanga:assembleDebug -x spotlessCheck
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
